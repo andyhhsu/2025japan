@@ -1,0 +1,552 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Plane, Bus, MapPin, Camera, Utensils, ShoppingBag, 
+  Hotel, Train, Sun, CloudSun, Moon, Copy, ExternalLink, 
+  Navigation, AlertCircle, Ticket, CheckSquare, Briefcase, 
+  Globe, Languages, Calculator, Wifi, Check, FileText, 
+  Table, RefreshCw, Zap
+} from 'lucide-react';
+
+const TravelItineraryApp = () => {
+  const [activeTab, setActiveTab] = useState('schedule'); // schedule, checklist, tools
+  const [activeDay, setActiveDay] = useState(0);
+  const [copiedId, setCopiedId] = useState(null);
+  
+  // Real-time Weather State
+  const [weatherInfo, setWeatherInfo] = useState({ temp: '--', code: 0, loading: true });
+
+  // Checklist State
+  const [checkedItems, setCheckedItems] = useState({});
+
+  const toggleCheck = (id) => {
+    setCheckedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleCopy = (e, text, id) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const getMapLink = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+  // --- Image Assets ---
+  const dayImages = [
+    // D1: Mt Fuji Lake
+    "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=800&q=80", 
+    // D2: Fuji-Q / Takabisha (Famous 121-degree drop view)
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Takabisha_roller_coaster.jpg/1200px-Takabisha_roller_coaster.jpg", 
+    // D3: Chureito Pagoda
+    "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=800&q=80", 
+    // D4: Shinjuku Night
+    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80", 
+    // D5: Shibuya Crossing
+    "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=800&q=80", 
+    // D6: Airport/Plane
+    "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=800&q=80"  
+  ];
+
+  // --- Real-time Weather Fetching ---
+  const locations = {
+    fuji: { lat: 35.49, lon: 138.75 },
+    tokyo: { lat: 35.68, lon: 139.76 }
+  };
+
+  const fetchWeather = async (lat, lon) => {
+    setWeatherInfo(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+      const data = await res.json();
+      setWeatherInfo({
+        temp: Math.round(data.current_weather.temperature),
+        code: data.current_weather.weathercode,
+        loading: false
+      });
+    } catch (error) {
+      console.error("Weather fetch failed", error);
+      setWeatherInfo({ temp: 'N/A', code: 0, loading: false });
+    }
+  };
+
+  // Weather Icon Mapping
+  const getWeatherIcon = (code) => {
+    if (code === 0) return <Sun className="text-yellow-400 drop-shadow-sm" />;
+    if (code >= 1 && code <= 3) return <CloudSun className="text-white drop-shadow-sm" />;
+    return <Sun className="text-yellow-400" />;
+  };
+
+  const getWeatherDesc = (code) => {
+    if (code === 0) return "晴朗";
+    if (code >= 1 && code <= 3) return "多雲時晴";
+    if (code >= 51) return "有雨";
+    return "陰天";
+  };
+
+  // --- Itinerary Data ---
+  const itinerary = [
+    {
+      day: "D1",
+      date: "11/30 (六)",
+      locationName: "河口湖",
+      lat: locations.fuji.lat, lon: locations.fuji.lon,
+      events: [
+        { time: "09:00", icon: <Plane />, type: "transport", title: "起飛", desc: "前往東京成田/羽田", detail: "12:50 落地", searchKey: "成田機場" },
+        { time: "14:00", icon: <Navigation />, type: "info", title: "出關", desc: "預計出關時間", searchKey: "成田機場" },
+        { time: "14:40", icon: <Bus />, type: "transport", title: "機場巴士", desc: "前往河口湖 (車程約 2:20)", detail: "第三航廈 7號月台 / 預購票 ¥2520 / 取消費 ¥100", warning: "記得先買車票", searchKey: "成田機場第三航廈 巴士乘車處" },
+        { time: "17:30", icon: <Hotel />, type: "stay", title: "Check-in 民宿", desc: "Cool Stay & Smart Dining", detail: "放下行李後可稍作休息", copyText: "Cool Stay & Smart Dining In The Fuji", searchKey: "Cool Stay & Smart Dining In The Fuji" },
+        { time: "19:00", icon: <Utensils />, type: "food", title: "晚餐", desc: "民宿附近或超商解決", searchKey: "河口湖 晚餐" },
+        { time: "晚間", icon: <Camera />, type: "spot", title: "大石公園 / 自然生活館", desc: "若有體力可去，冬天沒有花", detail: "搭河口湖周遊巴士紅線至「河口湖自然生活館」站", searchKey: "河口湖自然生活館" }
+      ]
+    },
+    {
+      day: "D2",
+      date: "12/1 (日)",
+      locationName: "富士急樂園",
+      lat: locations.fuji.lat, lon: locations.fuji.lon,
+      note: "全日戰略行程：優先券順序 鬼屋>飛車>巨人",
+      events: [
+        { time: "10:00", icon: <Ticket />, type: "spot", title: "購買優先券", desc: "順序：鬼屋 > 高飛車 > 進擊的巨人", detail: "入園首要任務", searchKey: "富士急樂園 售票處" },
+        { time: "10:30", icon: <Zap />, type: "activity", title: "高飛車 (Takabisha)", desc: "【使用快通】", detail: "最大落下角度 121°", searchKey: "Takabisha Fuji-Q" },
+        { time: "10:40", icon: <Navigation />, type: "activity", title: "自由落體 (Red Tower)", desc: "現場排隊", detail: "與高飛車相鄰", searchKey: "Red Tower Fuji-Q" },
+        { time: "11:20", icon: <Zap />, type: "activity", title: "ZOKKON", desc: "【使用快通】", detail: "機車式雲霄飛車", searchKey: "ZOKKON Fuji-Q" },
+        { time: "11:30", icon: <Zap />, type: "activity", title: "戰慄迷宮 (鬼屋)", desc: "【使用快通】", detail: "世界最長鬼屋", searchKey: "Super Scary Labyrinth of Fear" },
+        { time: "12:30", icon: <Navigation />, type: "activity", title: "急流泛舟 (Nagashimasuka)", desc: "現場排隊", detail: "可能會有水花", searchKey: "Nagashimasuka Fuji-Q" },
+        { time: "12:50", icon: <Utensils />, type: "food", title: "午餐：一樂拉麵", desc: "火影忍者主題餐廳", searchKey: "Ramen Ichiraku Fuji-Q" },
+        { time: "13:20", icon: <ShoppingBag />, type: "shop", title: "木葉忍者村", desc: "逛街 + 路邊小遊戲", searchKey: "Naruto x Boruto Fuji Hidden Leaf Village" },
+        { time: "14:10", icon: <Navigation />, type: "activity", title: "3D 射擊道場", desc: "現場排隊", detail: "科學忍具道場", searchKey: "Kagaku Ningu Dojo" },
+        { time: "14:45", icon: <Navigation />, type: "activity", title: "忍道館 (訓練場)", desc: "現場排隊", searchKey: "Fuji-Q Highland Naruto" },
+        { time: "15:30", icon: <Zap />, type: "activity", title: "FUJIYAMA", desc: "【使用快通】", detail: "King of Coasters", searchKey: "FUJIYAMA roller coaster" },
+        { time: "16:15", icon: <Navigation />, type: "activity", title: "摩天輪", desc: "現場排隊", detail: "欣賞富士山黃昏景", searchKey: "Shining Flower Ferris Wheel" },
+        { time: "16:45", icon: <Zap />, type: "activity", title: "進擊的巨人", desc: "【使用快通】", searchKey: "Attack on Titan The Ride Fuji-Q" },
+        { time: "17:00", icon: <Bus />, type: "transport", title: "離園", desc: "結束樂園行程", searchKey: "Fuji-Q Highland Station" }
+      ]
+    },
+    {
+      day: "D3",
+      date: "12/2 (一)",
+      locationName: "山中湖/忍野",
+      lat: locations.fuji.lat, lon: locations.fuji.lon,
+      note: "跑點行程：山中湖 > 忍野八海 > 淺間神社 > 商店街",
+      events: [
+        { time: "05:30", icon: <Sun />, type: "info", title: "起床", desc: "準備出門", detail: "早餐 06:40 吃完" },
+        { time: "07:00", icon: <Bus />, type: "transport", title: "前往山中湖", desc: "搭乘路線 7 / 730 / 8", detail: "車程約 40-50 min", searchKey: "河口湖站 公車" },
+        { time: "08:00", icon: <Camera />, type: "spot", title: "山中湖", desc: "租腳踏車 / 白鳥濱", detail: "09:00 可租腳踏車", searchKey: "山中湖 白鳥濱" },
+        { time: "10:00", icon: <Bus />, type: "transport", title: "前往忍野八海", desc: "搭公車，約半小時一班", searchKey: "忍野八海" },
+        { time: "10:30", icon: <Camera />, type: "spot", title: "忍野八海", desc: "鏡池、中池、湧池、濁池", detail: "可觸摸富士山雪水", searchKey: "忍野八海" },
+        { time: "11:30", icon: <Utensils />, type: "food", title: "午餐：池本茶屋", desc: "富士山水做的蕎麥麵", detail: "備案：彥兵衛烏龍麵、名泉蕎麥麵", copyText: "池本茶屋", searchKey: "池本茶屋 忍野八海" },
+        { time: "12:45", icon: <Camera />, type: "spot", title: "八海庭園 彦兵衛屋敷", desc: "傳統茅草屋 / 門票 ¥200", detail: "約停留 10 min", searchKey: "彦兵衛屋敷" },
+        { time: "13:30", icon: <Bus />, type: "transport", title: "前往下吉田", desc: "搭公車回民宿轉車 或 直接前往", detail: "可搭富士吉田/忍野/山中湖觀光巴士", searchKey: "下吉田站" },
+        { time: "14:30", icon: <Camera />, type: "spot", title: "新倉富士淺間神社", desc: "爬樓梯 20min 到頂觀景台", warning: "著名的五重塔+富士山景", searchKey: "新倉富士淺間神社" },
+        { time: "16:40", icon: <ShoppingBag />, type: "shop", title: "本町二丁目商店街", desc: "懷舊商店街拍照", detail: "自然行走斑馬線、長焦鏡拍攝", searchKey: "本町二丁目商店街" },
+        { time: "17:45", icon: <Camera />, type: "spot", title: "金鳥居", desc: "拍照後回民宿", searchKey: "富士山金鳥居" },
+        { time: "18:30", icon: <Utensils />, type: "food", title: "晚餐：Tomifuji", desc: "Yoshida 定食 (炸豬排/生魚片) 或 Tomifuji 鰻魚飯", copyText: "Tomifuji", searchKey: "Tomifuji 鰻魚飯" }
+      ]
+    },
+    {
+      day: "D4",
+      date: "12/3 (二)",
+      locationName: "新宿",
+      lat: locations.tokyo.lat, lon: locations.tokyo.lon,
+      events: [
+        { time: "06:00", icon: <Sun />, type: "info", title: "早起追逆富士", desc: "騎腳踏車去河口湖大橋", detail: "日出前一小時最佳 (紅頭富士)", searchKey: "河口湖大橋" },
+        { time: "10:00", icon: <Bus />, type: "transport", title: "車站寄放行李", desc: "Baggage counter", detail: "準備搭遊覽船/纜車", searchKey: "河口湖站" },
+        { time: "10:30", icon: <Navigation />, type: "activity", title: "河口湖遊覽船", desc: "天晴號 (20min)", detail: "¥1000/人，現場排隊候位", searchKey: "河口湖遊覽船 天晴號" },
+        { time: "11:30", icon: <Camera />, type: "spot", title: "天上山公園 (纜車)", desc: "絕景盪鞦韆 ¥500", detail: "必吃：兔子糰子、富士山冰棒 @狸貓茶屋", searchKey: "河口湖天上山公園" },
+        { time: "14:10", icon: <Bus />, type: "transport", title: "高速巴士", desc: "前往新宿 (預計 15:55 抵達)", detail: "下車點：Busta新宿 (南口)", searchKey: "Busta Shinjuku" },
+        { time: "16:40", icon: <Hotel />, type: "stay", title: "Check-in DOMO Hotel", desc: "放置行李", copyText: "DOMO Hotel Shinjuku", searchKey: "DOMO Hotel Shinjuku" },
+        { time: "17:30", icon: <Utensils />, type: "food", title: "下午茶", desc: "Afternoon Tea Love & Table", detail: "位於 Lumine 1", searchKey: "Afternoon Tea Love & Table Shinjuku" },
+        { time: "18:30", icon: <ShoppingBag />, type: "shop", title: "新宿百貨巡禮", desc: "Lumine EST (年輕潮流) / Lumine 2 (無印良品 6F)", detail: "Beams, Onitsuka Tiger, Press Butter Sand", searchKey: "Lumine Est Shinjuku" },
+        { time: "19:00", icon: <ShoppingBag />, type: "shop", title: "街邊購物", desc: "Uniqlo Flagship / 唐吉軻德", detail: "Big Camera 同棟 Uniqlo", searchKey: "Uniqlo Shinjuku Honten" },
+        { time: "21:10", icon: <Utensils />, type: "food", title: "晚餐：阿夫利 (辛紅)", desc: "AFURI 辛紅", warning: "L/O 21:30", copyText: "AFURI kara-kurenai Shinjuku", searchKey: "AFURI kara-kurenai Shinjuku" },
+        { time: "22:30", icon: <Camera />, type: "spot", title: "東京鐵塔夜景", desc: "芝公園 (23:00 熄燈)", searchKey: "芝公園 東京鐵塔" }
+      ]
+    },
+    {
+      day: "D5",
+      date: "12/4 (三)",
+      locationName: "原宿/澀谷",
+      lat: locations.tokyo.lat, lon: locations.tokyo.lon,
+      events: [
+        { time: "09:00", icon: <MapPin />, type: "spot", title: "明治神宮", desc: "北口鳥居 > 正殿 > 清正井 > 御苑", detail: "御苑 ¥500 (若有楓葉再去)", searchKey: "明治神宮" },
+        { time: "10:10", icon: <Camera />, type: "spot", title: "代代木公園", desc: "櫸樹林蔭道 (楓葉/銀杏)", detail: "原宿門、噴水池西側", searchKey: "代代木公園" },
+        { time: "10:50", icon: <Utensils />, type: "food", title: "MARION CREPES", desc: "原宿可麗餅", copyText: "MARION CREPES Harajuku", searchKey: "MARION CREPES Harajuku" },
+        { time: "11:00", icon: <ShoppingBag />, type: "shop", title: "原宿購物", desc: "@COSME / Asics / LaForet", detail: "LaForet: 1F Vivienne Westwood, 2F 手機殼", searchKey: "Laforet Harajuku" },
+        { time: "13:30", icon: <ShoppingBag />, type: "shop", title: "表參道", desc: "精品街 / Number Sugar 伴手禮", searchKey: "Number Sugar Omotesando" },
+        { time: "14:30", icon: <Utensils />, type: "food", title: "午餐：麵散", desc: "奶油烏龍麵 (需排隊)", copyText: "Menchirashi", searchKey: "Menchirashi" },
+        { time: "16:30", icon: <Camera />, type: "spot", title: "SHIBUYA SKY", desc: "Scramble Square 頂樓 (需預約)", detail: "日落時段最佳 / 禁止帶包包 (需置物)", searchKey: "SHIBUYA SKY" },
+        { time: "18:00", icon: <ShoppingBag />, type: "shop", title: "澀谷購物", desc: "Parco / LOFT / 109", detail: "Parco: Human Made, North Face Lab, Nintendo", searchKey: "Shibuya PARCO" },
+        { time: "19:00", icon: <Utensils />, type: "food", title: "晚餐：六歌仙燒肉", desc: "或 利久牛舌 / 敘敘苑 (夜景建議 Opera City 店)", copyText: "Rokkasen Honten", searchKey: "Rokkasen Honten" },
+        { time: "22:30", icon: <Utensils />, type: "food", title: "宵夜：新宿串燒", desc: "Yakitori Izakaya Kemuri", copyText: "Yakitori Izakaya Kemuri", searchKey: "Yakitori Izakaya Kemuri" }
+      ]
+    },
+    {
+      day: "D6",
+      date: "12/5 (四)",
+      locationName: "成田機場",
+      lat: locations.tokyo.lat, lon: locations.tokyo.lon,
+      events: [
+        { time: "10:30", icon: <Hotel />, type: "stay", title: "Check-out", desc: "整理行李", searchKey: "" },
+        { time: "11:30", icon: <Utensils />, type: "food", title: "HARBS", desc: "Lumine EST B2", copyText: "HARBS Lumine Est", searchKey: "HARBS Lumine Est" },
+        { time: "13:38", icon: <Train />, type: "transport", title: "N'EX 成田快線", desc: "前往成田機場 T1", detail: "33號 / 14:08 抵達 (車程 1:20)", searchKey: "Narita Express" },
+        { time: "17:45", icon: <Plane />, type: "transport", title: "起飛", desc: "Bye Bye Tokyo", searchKey: "Narita Airport Terminal 1" }
+      ]
+    }
+  ];
+
+  const checklistData = [
+    { id: 'c1', category: '必備文件', items: ['護照 (有效期限6個月以上)', 'Visit Japan Web (截圖QR Code)', '機票電子檔', '住宿預訂憑證'] },
+    { id: 'c2', category: '電子產品', items: ['網卡 / eSIM (設定完成)', '行動電源', '轉接頭/充電器', '相機記憶卡'] },
+    { id: 'c3', category: '生活用品', items: ['個人常備藥品', '保暖衣物 (富士山溫差大)', '牙刷/牙膏 (部分民宿不提供)', '好走的鞋子'] },
+    { id: 'c4', category: '金錢與支付', items: ['日幣現金 (約 ¥50,000)', '西瓜卡 (Suica/Pasmo) Apple Pay', '信用卡 (JCB/Visa)', '海外提款開通'] }
+  ];
+
+  const toolsData = [
+    { title: "Google 翻譯", desc: "相機翻譯菜單必備", icon: <Languages />, url: "https://translate.google.com/?sl=ja&tl=zh-TW&op=translate" },
+    { title: "乘換案內", desc: "查詢電車時刻最準確", icon: <Train />, url: "https://transit.yahoo.co.jp/" },
+    { title: "Visit Japan Web", desc: "入境快速通關", icon: <Globe />, url: "https://vjw-lp.digital.go.jp/zh-hant/" },
+    { title: "匯率換算", desc: "即時計算台幣價格", icon: <Calculator />, url: "https://www.google.com/search?q=JPY+to+TWD" },
+  ];
+
+  // User Provided Links
+  const userLinks = [
+    { title: "行程詳細規劃 (Doc)", desc: "Google Document", icon: <FileText />, url: "https://docs.google.com/document/d/18Oa8p5q-W6OYmJDv24yJl90vCNZXCzSIuZiUpx6ckHM/edit?tab=t.k94vu2a7584" },
+    { title: "預算與清單 (Sheet)", desc: "Google Spreadsheet", icon: <Table />, url: "https://docs.google.com/spreadsheets/d/1vGLUS_WY8YnUQE61gRHYg197-zslwYPJqu87aST4k0I/edit?gid=0#gid=0" }
+  ];
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'transport': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'spot': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      case 'food': return 'bg-orange-50 text-orange-700 border-orange-100';
+      case 'shop': return 'bg-purple-50 text-purple-700 border-purple-100';
+      case 'stay': return 'bg-indigo-50 text-indigo-700 border-indigo-100';
+      case 'warning': return 'bg-red-50 text-red-700 border-red-100';
+      default: return 'bg-gray-50 text-gray-700 border-gray-100';
+    }
+  };
+
+  const activeData = itinerary[activeDay];
+
+  // Fetch weather when active day changes
+  useEffect(() => {
+    if (activeTab === 'schedule') {
+      fetchWeather(activeData.lat, activeData.lon);
+    }
+  }, [activeDay, activeTab]);
+
+  return (
+    <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-2xl relative font-sans text-gray-800 pb-24 overflow-hidden">
+      
+      {/* --- Schedule View --- */}
+      {activeTab === 'schedule' && (
+        <>
+          {/* Hero Header with Image */}
+          <div className="relative h-64">
+            <div className="absolute inset-0">
+              <img 
+                src={dayImages[activeDay]} 
+                alt="Scenic View" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent" />
+            </div>
+
+            {/* Weather & Location Float Card */}
+            <div className="absolute top-6 right-4 flex flex-col items-end gap-2 z-10">
+              <div className="flex flex-col items-end bg-white/20 backdrop-blur-md p-2 px-3 rounded-2xl border border-white/20 text-white shadow-lg">
+                <div className="flex items-center gap-2">
+                  {weatherInfo.loading ? <RefreshCw className="animate-spin" size={16} /> : getWeatherIcon(weatherInfo.code)}
+                  <span className="font-bold text-xl">{weatherInfo.loading ? '--' : `${weatherInfo.temp}°C`}</span>
+                </div>
+                <p className="text-[10px] font-medium opacity-90 mt-0.5">
+                  {weatherInfo.loading ? '更新中...' : `${getWeatherDesc(weatherInfo.code)} | ${activeData.locationName}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Title & Date */}
+            <div className="absolute bottom-4 left-6 text-white z-10">
+              <p className="text-blue-200 text-xs font-bold tracking-wider uppercase mb-1">Current Trip</p>
+              <h1 className="text-4xl font-black tracking-tight mb-1">{activeData.day}</h1>
+              <p className="text-white/90 font-medium text-lg">{activeData.date}</p>
+            </div>
+          </div>
+
+          {/* Date Tabs (Sticky) */}
+          <div className="bg-white/95 backdrop-blur-sm sticky top-0 z-30 shadow-sm border-b border-gray-100">
+            <div className="flex overflow-x-auto p-3 gap-2 no-scrollbar snap-x">
+              {itinerary.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveDay(index)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all snap-start ${
+                    activeDay === index
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {item.day}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Note Banner */}
+          {activeData.note && (
+            <div className="mx-4 mt-4 p-3 bg-amber-50 border border-amber-100 text-amber-800 text-xs rounded-xl flex gap-3 shadow-sm">
+              <AlertCircle size={16} className="flex-shrink-0 text-amber-500" />
+              <span className="font-medium leading-relaxed">{activeData.note}</span>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div className="px-5 py-6 space-y-8 relative">
+            <div className="absolute left-[27px] top-6 bottom-10 w-0.5 bg-gray-200/60" />
+            
+            {activeData.events.map((event, idx) => (
+              <div key={idx} className="relative pl-12 group">
+                {/* Dot */}
+                <div className={`absolute left-[21px] top-5 w-3.5 h-3.5 rounded-full border-[3px] border-white shadow-sm z-10 box-content ${
+                  event.type === 'transport' ? 'bg-blue-500' : 
+                  event.type === 'food' ? 'bg-orange-500' : 
+                  event.type === 'shop' ? 'bg-purple-500' : 'bg-emerald-500'
+                }`} />
+
+                {/* Time */}
+                <span className="text-xs font-bold text-gray-400 mb-1.5 block font-mono tracking-wide">{event.time}</span>
+
+                {/* Card */}
+                <div className={`p-4 rounded-2xl border transition-all bg-white relative hover:scale-[1.02] active:scale-[0.98] duration-200 shadow-sm ${getTypeColor(event.type).replace('bg-', 'border-l-[6px] border-')}`}>
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`p-1 rounded-md ${getTypeColor(event.type)} bg-opacity-20`}>
+                          {React.cloneElement(event.icon, { size: 14 })}
+                        </span>
+                        {event.searchKey ? (
+                          <a 
+                            href={getMapLink(event.searchKey)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="font-bold text-gray-800 text-lg hover:text-blue-600 truncate flex items-center gap-1.5 group/link"
+                          >
+                            {event.title}
+                            <ExternalLink size={14} className="opacity-30 group-hover/link:opacity-100 transition-opacity" />
+                          </a>
+                        ) : (
+                          <h3 className="font-bold text-gray-800 text-lg truncate">{event.title}</h3>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed font-medium">{event.desc}</p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    {event.copyText && (
+                      <button 
+                        onClick={(e) => handleCopy(e, event.copyText, idx)}
+                        className="p-2 rounded-full bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0"
+                      >
+                        {copiedId === idx ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mt-3.5">
+                    {event.detail && (
+                      <span className="text-[11px] bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5">
+                        💡 {event.detail}
+                      </span>
+                    )}
+                    {event.warning && (
+                      <span className="text-[11px] bg-red-50 text-red-600 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5 border border-red-100/50">
+                        ⚠️ {event.warning}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* FAB */}
+          <div className="fixed bottom-24 right-6 z-20">
+            <button 
+              onClick={() => window.open(getMapLink(activeData.locationName), '_blank')}
+              className="bg-blue-600 text-white w-14 h-14 rounded-full shadow-xl shadow-blue-600/30 hover:bg-blue-700 transition-transform active:scale-90 flex items-center justify-center"
+            >
+              <Navigation size={26} />
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* --- Checklist View --- */}
+      {activeTab === 'checklist' && (
+        <div className="p-6 pt-12 animate-fade-in">
+          <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-gray-800">
+            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <CheckSquare size={24} />
+            </div>
+            行前檢查
+          </h2>
+          <div className="space-y-6">
+            {checklistData.map((group) => (
+              <div key={group.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-gray-50/50 px-5 py-4 font-bold text-gray-700 flex items-center justify-between border-b border-gray-100">
+                  {group.category}
+                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+                    {group.items.filter(item => checkedItems[`${group.id}-${item}`]).length} / {group.items.length}
+                  </span>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {group.items.map((item, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => toggleCheck(`${group.id}-${item}`)}
+                      className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-blue-50/50 transition-colors active:bg-blue-100/50"
+                    >
+                      <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+                        checkedItems[`${group.id}-${item}`] 
+                          ? 'bg-blue-500 border-blue-500 scale-100' 
+                          : 'border-gray-300 bg-white scale-95'
+                      }`}>
+                        {checkedItems[`${group.id}-${item}`] && <Check size={14} className="text-white" />}
+                      </div>
+                      <span className={`text-sm font-medium transition-all ${checkedItems[`${group.id}-${item}`] ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                        {item}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* --- Tools View --- */}
+      {activeTab === 'tools' && (
+        <div className="p-6 pt-12 animate-fade-in">
+          <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-gray-800">
+            <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+              <Briefcase size={24} />
+            </div>
+            實用工具
+          </h2>
+
+          {/* Personal Docs Section */}
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 ml-1">我的行程文件</h3>
+            <div className="grid grid-cols-1 gap-3">
+              {userLinks.map((tool, idx) => (
+                <a 
+                  key={idx}
+                  href={tool.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex items-center gap-4 group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {tool.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-800 text-lg">{tool.title}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">{tool.desc}</p>
+                  </div>
+                  <ExternalLink size={16} className="ml-auto text-gray-300 group-hover:text-blue-400" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Public Tools Section */}
+          <div className="mb-6">
+             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 ml-1">日本旅遊必備</h3>
+             <div className="grid grid-cols-2 gap-3">
+              {toolsData.map((tool, idx) => (
+                <a 
+                  key={idx}
+                  href={tool.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col items-center text-center gap-3 group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                    {tool.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-700 text-sm">{tool.title}</h3>
+                    <p className="text-[10px] text-gray-400 mt-1">{tool.desc}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-5 rounded-2xl border border-indigo-100">
+            <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
+              <Wifi size={18} /> 緊急聯絡
+            </h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-indigo-800 border-b border-indigo-200/50 pb-2">
+                <span>警察局</span>
+                <span className="font-mono font-bold">110</span>
+              </div>
+              <div className="flex justify-between text-sm text-indigo-800 border-b border-indigo-200/50 pb-2">
+                <span>火警/救護</span>
+                <span className="font-mono font-bold">119</span>
+              </div>
+              <div className="flex justify-between text-sm text-indigo-800">
+                <span>駐日代表處</span>
+                <span className="font-mono font-bold">03-3280-7811</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Navigation (Tab Bar) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe pt-2 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+          <button 
+            onClick={() => setActiveTab('schedule')}
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${
+              activeTab === 'schedule' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-500'
+            }`}
+          >
+            <MapPin size={24} strokeWidth={activeTab === 'schedule' ? 2.5 : 2} />
+            <span className="text-[10px] font-bold">行程</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('checklist')}
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${
+              activeTab === 'checklist' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-500'
+            }`}
+          >
+            <CheckSquare size={24} strokeWidth={activeTab === 'checklist' ? 2.5 : 2} />
+            <span className="text-[10px] font-bold">清單</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('tools')}
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${
+              activeTab === 'tools' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-500'
+            }`}
+          >
+            <Briefcase size={24} strokeWidth={activeTab === 'tools' ? 2.5 : 2} />
+            <span className="text-[10px] font-bold">工具</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default TravelItineraryApp;
