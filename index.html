@@ -93,7 +93,7 @@
             const dayImages = [
                 // D1: Mt Fuji Lake
                 "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=800&q=80", 
-                // D2: Fuji-Q (GitHub Raw Link) - Updated per user request
+                // D2: Fuji-Q (GitHub Raw Link)
                 "https://raw.githubusercontent.com/andyhhsu/2025japan/main/%E6%93%B7%E5%8F%96.PNG", 
                 // D3: Chureito Pagoda
                 "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=800&q=80", 
@@ -152,7 +152,7 @@
                     { time: "09:00", icon: <Plane />, type: "transport", title: "起飛", desc: "前往東京成田/羽田", detail: "12:50 落地", searchKey: "成田機場" },
                     { time: "14:00", icon: <Navigation />, type: "info", title: "出關", desc: "預計出關時間", searchKey: "成田機場" },
                     { time: "14:40", icon: <Bus />, type: "transport", title: "機場巴士", desc: "前往河口湖 (車程約 2:20)", detail: "第三航廈 7號月台 / 預購票 ¥2520 / 取消費 ¥100", warning: "記得先買車票", searchKey: "成田機場第三航廈 巴士乘車處" },
-                    { time: "17:30", icon: <Hotel />, type: "stay", title: "Check-in 民宿", desc: "Cool Stay & Smart Dining", detail: "放下行李後可稍作休息", copyText: "Cool Stay & Smart Dining In The Fuji", searchKey: "Cool Stay & Smart Dining In The Fuji" },
+                    { time: "17:30", icon: <Hotel />, type: "stay", title: "Check-in 民宿", desc: "Cool Stay & Smart Dining", detail: "請使用日文名導航較準確", copyText: "クール・ステイ＆スマートダイニング", searchKey: "クール・ステイ＆スマートダイニング" },
                     { time: "19:00", icon: <Utensils />, type: "food", title: "晚餐", desc: "民宿附近或超商解決", searchKey: "河口湖 晚餐" },
                     { time: "晚間", icon: <Camera />, type: "spot", title: "大石公園 / 自然生活館", desc: "若有體力可去，冬天沒有花", detail: "搭河口湖周遊巴士紅線至「河口湖自然生活館」站", searchKey: "河口湖自然生活館" }
                 ]
@@ -187,18 +187,22 @@
                 lat: locations.fuji.lat, lon: locations.fuji.lon,
                 note: "跑點行程：山中湖 > 忍野八海 > 淺間神社 > 商店街",
                 events: [
-                    { time: "05:30", icon: <Sun />, type: "info", title: "起床", desc: "準備出門", detail: "早餐 06:40 吃完" },
-                    { time: "07:00", icon: <Bus />, type: "transport", title: "前往山中湖", desc: "搭乘路線 7 / 730 / 8", detail: "車程約 40-50 min", searchKey: "河口湖站 公車" },
-                    { time: "08:00", icon: <Camera />, type: "spot", title: "山中湖", desc: "租腳踏車 / 白鳥濱", detail: "09:00 可租腳踏車", searchKey: "山中湖 白鳥濱" },
-                    { time: "10:00", icon: <Bus />, type: "transport", title: "前往忍野八海", desc: "搭公車，約半小時一班", searchKey: "忍野八海" },
-                    { time: "10:30", icon: <Camera />, type: "spot", title: "忍野八海", desc: "鏡池、中池、湧池、濁池", detail: "可觸摸富士山雪水", searchKey: "忍野八海" },
-                    { time: "11:30", icon: <Utensils />, type: "food", title: "午餐：池本茶屋", desc: "富士山水做的蕎麥麵", detail: "備案：彥兵衛烏龍麵、名泉蕎麥麵", copyText: "池本茶屋", searchKey: "池本茶屋 忍野八海" },
-                    { time: "12:45", icon: <Camera />, type: "spot", title: "八海庭園 彦兵衛屋敷", desc: "傳統茅草屋 / 門票 ¥200", detail: "約停留 10 min", searchKey: "彦兵衛屋敷" },
-                    { time: "13:30", icon: <Bus />, type: "transport", title: "前往下吉田", desc: "搭公車回民宿轉車 或 直接前往", detail: "可搭富士吉田/忍野/山中湖觀光巴士", searchKey: "下吉田站" },
-                    { time: "14:30", icon: <Camera />, type: "spot", title: "新倉富士淺間神社", desc: "爬樓梯 20min 到頂觀景台", warning: "著名的五重塔+富士山景", searchKey: "新倉富士淺間神社" },
-                    { time: "16:40", icon: <ShoppingBag />, type: "shop", title: "本町二丁目商店街", desc: "懷舊商店街拍照", detail: "自然行走斑馬線、長焦鏡拍攝", searchKey: "本町二丁目商店街" },
-                    { time: "17:45", icon: <Camera />, type: "spot", title: "金鳥居", desc: "拍照後回民宿", searchKey: "富士山金鳥居" },
-                    { time: "18:30", icon: <Utensils />, type: "food", title: "晚餐：Tomifuji", desc: "Yoshida 定食 (炸豬排/生魚片) 或 Tomifuji 鰻魚飯", copyText: "Tomifuji", searchKey: "Tomifuji 鰻魚飯" }
+                    { time: "08:00", icon: <Utensils />, type: "food", title: "早餐+拍照", desc: "享用早餐並補拍富士山", searchKey: "" },
+                    { time: "08:40", icon: <Bus />, type: "transport", title: "出門搭公車", desc: "前往忍野", detail: "班次 8:48 / 9:03", searchKey: "河口湖站 公車" },
+                    { time: "09:20", icon: <Camera />, type: "spot", title: "八海庭園 彦兵衛屋敷", desc: "傳統茅草屋", cost: "¥200", searchKey: "彦兵衛屋敷" },
+                    { time: "09:40", icon: <Utensils />, type: "food", title: "草餅", desc: "街邊任一家都行", searchKey: "忍野八海 草餅" },
+                    { time: "09:50", icon: <Camera />, type: "spot", title: "忍野八海", desc: "鏡池、中池、湧池、濁池", detail: "觸摸富士山雪水", searchKey: "忍野八海" },
+                    { time: "10:30", icon: <Utensils />, type: "food", title: "午餐：池本茶屋", desc: "或 名泉蕎麥麵", copyText: "池本茶屋", searchKey: "池本茶屋 忍野八海" },
+                    { time: "11:15", icon: <ShoppingBag />, type: "shop", title: "手燒堂仙貝", desc: "忍野八海店", detail: "10:00–17:00", searchKey: "手焼堂 忍野八海店" },
+                    { time: "11:30", icon: <Bus />, type: "transport", title: "前往新倉山淺間神社", desc: "車程約 1 小時", searchKey: "新倉富士淺間神社" },
+                    { time: "12:40", icon: <Camera />, type: "spot", title: "新倉富士淺間神社", desc: "爬樓梯 400 階 (約 15min)", warning: "經典五重塔景觀", searchKey: "新倉富士淺間神社" },
+                    { time: "14:15", icon: <ShoppingBag />, type: "shop", title: "本町二丁目商店街", desc: "懷舊商店街拍照", searchKey: "本町二丁目商店街" },
+                    { time: "14:50", icon: <Bus />, type: "transport", title: "回民宿拿行李", desc: "準備移動", searchKey: "" },
+                    { time: "15:30", icon: <Train />, type: "transport", title: "地鐵去河口湖", desc: "15:41 發車", searchKey: "下吉田站" },
+                    { time: "16:00", icon: <MapPin />, type: "activity", title: "租電動滑板車", desc: "E-scooter Rental Rimo", searchKey: "E-scooter Rental Rimo" },
+                    { time: "17:00", icon: <Utensils />, type: "food", title: "富士山布丁+吐司", desc: "Fujisan Pudding", detail: "營業至 18:00", searchKey: "Fujisan Pudding" },
+                    { time: "18:00", icon: <Check />, type: "stay", title: "還車 & C/I Haostay", desc: "辦理入住", copyText: "Haostay", searchKey: "Haostay" },
+                    { time: "18:30", icon: <Utensils />, type: "food", title: "晚餐", desc: "Haostay 附近覓食", searchKey: "Haostay 附近晚餐" }
                 ]
                 },
                 {
